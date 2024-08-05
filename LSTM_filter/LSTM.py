@@ -1,5 +1,6 @@
 import torch
 import random
+import csv
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
@@ -105,14 +106,15 @@ class Trajectory_Prediction_Model:
                 loss = self.criterion(output, y)
                 loss.backward()
                 self.optimizer.step()
+                        
             if (epoch + 1) % 100 == 0:
                 print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {loss.item():.4f}')
 
     def predict(self):
         self.model.eval()
         with torch.no_grad():
-            # for data in train_dataset:
-                data =  random.choice(train_dataset)    
+            for data in train_dataset:
+                # data =  random.choice(train_dataset)    
                 points = data.points
                 points_diff = np.diff(points, axis=0)
                 _, points_noised = self.noised(points)
@@ -135,6 +137,15 @@ class Trajectory_Prediction_Model:
                 Loss = self.criterion(output, y)
                 future_points_diff = output.squeeze().numpy()
                 predicted_point = points[-1] + future_points_diff
+
+                # Save points, predicted_point, and loss to CSV
+                with open(f'LSTM_filter/points/{self.label}_{data.label}_points.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['Original Points', 'Predicted Point', 'Loss'])
+                    for point in points:
+                        writer.writerow([point, '', ''])
+                    writer.writerow(['', predicted_point, Loss.item()])
+
                 plot_prediction(points, points_noised, predicted_point, self.label, output_path=f'LSTM_filter/plot/{self.label}_{data.label}_pred.png', loss=Loss.item())
 
 # Ê¹ÓÃÊ¾Àý

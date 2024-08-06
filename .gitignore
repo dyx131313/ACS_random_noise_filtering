@@ -5,3 +5,5 @@
 /.vs
 /LSTM_filter/plot_fun/__pycache__
 /LSTM_filter/__pycache__
+/plot_fun/__pycache__
+/__pycache__

@@ -9,7 +9,7 @@ from data import train_dataset
 from plot_fun.noised_prediction_test_plot import plot_prediction  # 导入绘图函数
 
 class Trajectory_Prediction_Model:
-    def __init__(self, label = "default", input_size=4, hidden_size=20, output_size=2, num_layers=3, dropout=0.3, lr=0.001, num_epochs=2000):
+    def __init__(self, label = "default", input_size=4, hidden_size=20, output_size=2, num_layers=3, dropout=0.3, lr=0.001, num_epochs=3000, is_model_save = 0):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -26,6 +26,13 @@ class Trajectory_Prediction_Model:
         self.gen_noise = np.random.normal(0, 0.1, 1000)
 
         self.label = label
+        
+        self.model_path  = f'LSTM_data/model/epoch_{self.num_epochs}.pth'
+        
+        # 加载模型
+        if is_model_save:
+            self.model.load_state_dict(torch.load(self.model_path))
+            print(f"Model loaded from {self.model_path}")
 
     class LSTM(nn.Module):
         def __init__(self, input_size, hidden_size, output_size, num_layers=2, dropout=0.5):
@@ -107,8 +114,10 @@ class Trajectory_Prediction_Model:
                 loss.backward()
                 self.optimizer.step()
                     
-            if (epoch + 1) % 100 == 0:
+            if (epoch + 1) % 1000 == 0:
                 print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {loss.item():.4f}')
+                # 保存模型
+                torch.save(self.model.state_dict(), self.model_path)
 
 
     def predict(self):
@@ -149,9 +158,10 @@ class Trajectory_Prediction_Model:
 
 # 使用示例
 if __name__ == "__main__":
-    X_prediction = Trajectory_Prediction_Model(label = "X")
-    X_prediction.train()
-    X_prediction.predict()
-    Y_prediction = Trajectory_Prediction_Model(label = "Y")
-    Y_prediction.train()
-    Y_prediction.predict()
+    X_pred = Trajectory_Prediction_Model(label = "X")
+    X_pred.train()
+    X_pred.predict()
+    
+    Y_pred = Trajectory_Prediction_Model(label = "Y", is_model_save = 1)
+    Y_pred.train()
+    Y_pred.predict()

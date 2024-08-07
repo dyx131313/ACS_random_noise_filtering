@@ -26,7 +26,7 @@ def add_noise(points, noise_level=0.1):
 
 # Kalman Filter implementation
 class KalmanFilter:
-    def __init__(self, dt, process_noise, measurement_noise):
+    def __init__(self, label = "default", dt = 1, process_noise = 0.01, measurement_noise = 0.2):
         self.dt = dt
         self.state_dim = 2  # 只考虑 y 轴上的位置和速度
         self.measurement_dim = 1  # 只测量 y 轴上的位置
@@ -37,6 +37,7 @@ class KalmanFilter:
         self.x_hat = np.zeros(self.state_dim)  # 初始状态估计
         self.P = np.eye(self.state_dim)  # 初始估计协方差矩阵
         self.gen_noise = np.random.normal(0, 0.1, 1000)
+        self.label = label
 
     def predict(self):
         self.x_hat = self.A @ self.x_hat
@@ -78,7 +79,7 @@ class KalmanFilter:
         last_estimated_point = estimated_trajectory_with_x[-1]
 
         # 保存结果到CSV文件
-        with open(f'{output_dir}/points/{dataset.label}_points.csv', mode='w', newline='') as file:
+        with open(f'{output_dir}/points/{self.label}_{dataset.label}_points.csv', mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['Original Points', 'Predicted Point', 'Loss'])
             for point, est_point in zip(points, estimated_trajectory_with_x):
@@ -88,11 +89,14 @@ class KalmanFilter:
         cur_loss = np.linalg.norm(points[-1, 1] - last_estimated_point[1])
         
         # 绘图
-        plot_prediction(points, points_noised, last_estimated_point, label=dataset.label, output_path=f'{output_dir}/plot/{dataset.label}_pred.png', loss = cur_loss)
-
+        plot_prediction(points, points_noised, last_estimated_point, label=dataset.label, output_path=f'{output_dir}/plot/{self.label}_{dataset.label}_pred.png', loss = cur_loss)
+    def train(self):
+        for data in train_dataset:
+            self.process_dataset(data)
 # 运行Kalman Filter
 if __name__ == "__main__":
-    kf = KalmanFilter(dt=1, process_noise=0.01, measurement_noise=0.2)
-
-    for data in train_dataset:
-        kf.process_dataset(data)
+    X_pred = KalmanFilter(label = "X")
+    X_pred.train()
+    
+    Y_pred = KalmanFilter(label = "Y")
+    Y_pred.train()
